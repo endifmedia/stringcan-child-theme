@@ -1,0 +1,1 @@
+# stringcan-child-theme
