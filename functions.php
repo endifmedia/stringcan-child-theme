@@ -9,7 +9,7 @@
  * For more information on hooks, actions, and filters,
  * @link http://codex.wordpress.org/Plugin_API
  *
- * @since Stringcan Theme 1.2
+ * @since Stringcan Theme 1.3
  */
 
 /**
@@ -119,10 +119,10 @@ add_action('after_setup_theme', 'stringcan_initialize_parent' );
  *
  * Include automatic updates from GIT repository
  */
-require_once get_stylesheet_directory() . 'BFIGitHubPluginUploader.php';
+require_once get_stylesheet_directory() . '/includes/endifMediaGitHubPluginUploader.php';
 
 if ( is_admin() ) {
-    new BFIGitHubPluginUpdater( __FILE__, 'eaallen@iupui.edu', 'stringcan-child-theme', 'a3ffced37855f6b1a98d2ee391b54519699c84be' );
+    new endifMediaGitHubPluginUpdater( __FILE__, 'endifmedia', 'stringcan-child-theme', 'a3ffced37855f6b1a98d2ee391b54519699c84be' );
 }
 
 /**
