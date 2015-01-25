@@ -11,7 +11,7 @@ class endifMediaGitHubPluginUpdater {
     private $accessToken; // GitHub private repo token
  
     function __construct( $pluginFile, $gitHubUsername, $gitHubProjectName, $accessToken = '' ) {
-        add_filter( "pre_set_site_transient_update_plugins", array( $this, "setTransitent" ) );
+        add_filter( "pre_set_site_transient_update_themes", array( $this, "setTransitent" ) );
         add_filter( "plugins_api", array( $this, "setPluginInfo" ), 10, 3 );
         add_filter( "upgrader_post_install", array( $this, "postInstall" ), 10, 3 );
  
@@ -24,8 +24,10 @@ class endifMediaGitHubPluginUpdater {
     // Get information regarding our plugin from WordPress
     private function initPluginData() {
         // code here
-        $this->slug = plugin_basename( $this->pluginFile );
-        $this->pluginData = get_plugin_data( $this->pluginFile );
+        //$this->slug = plugin_basename( $this->pluginFile );
+
+        $this->pluginData = wp_get_theme();
+        $this->slug = 'stringcan-child-theme';
     }
  
     // Get information regarding our plugin from GitHub
@@ -47,7 +49,7 @@ class endifMediaGitHubPluginUpdater {
         // Get the results
         $this->githubAPIResult = wp_remote_retrieve_body( wp_remote_get( $url ) );
         if ( ! empty( $this->githubAPIResult ) ) {
-            $this->githubAPIResult = @json_decode( $this->githubAPIResult );
+            $this->githubAPIResult = @json_decode( $this->githubAPIResult, true );
         }
     }
  
@@ -55,7 +57,7 @@ class endifMediaGitHubPluginUpdater {
     public function setTransitent( $transient ) {
         // If we have checked the plugin data before, don't re-check
         if ( empty( $transient->checked ) ) {
-            return $transient;
+            //return $transient;
         }
 
         // Get plugin & GitHub release information
@@ -63,24 +65,47 @@ class endifMediaGitHubPluginUpdater {
         $this->getRepoReleaseInfo();
 
         // Check the versions if we need to do an update
-        $doUpdate = version_compare( $this->githubAPIResult->tag_name, $transient->checked[$this->slug] );
+        $doUpdate = '1';//version_compare( $this->githubAPIResult->tag_name, $transient->checked[$this->slug] );
+
+       
 
         // Update the transient to include our updated plugin data
         if ( $doUpdate == 1 ) {
-            $package = $this->githubAPIResult->zipball_url;
+
+            /*echo '<pre>';
+            //var_dump($this->githubAPIResult);
+            
+            print_r($this->githubAPIResult[0]['tag_name']);
+            print_r($this->githubAPIResult[0]['zipball_url']);
+            print_r($this->githubAPIResult[0]['url']);            
+            echo '</pre>';*/
+
+            $package = $this->githubAPIResult[0]['zipball_url'];
          
             // Include the access token for private GitHub repos
             if ( !empty( $this->accessToken ) ) {
                 $package = add_query_arg( array( "access_token" => $this->accessToken ), $package );
             }
          
-            $obj = new stdClass();
-            $obj->slug = $this->slug;
-            $obj->new_version = $this->githubAPIResult->tag_name;
-            $obj->url = $this->pluginData["PluginURI"];
-            $obj->package = $package;
-            $transient->response[$this->slug] = $obj;
+            /*$obj = new stdClass();
+            $obj->slug = 'stringcan-child-theme';//$this->slug;
+            $obj->new_version = $this->githubAPIResult[0]['tag_name'];
+            $obj->url = $this->pluginData["ThemeURI"];
+            $obj->package = $package;*/
+
+
+            $transient->response[$this->slug] = array( 
+                    'slug' => 'stringcan-child-theme',
+                    'new_version' => $this->githubAPIResult[0]['tag_name'],
+                    'url' => 'https://github.com/endifmedia/stringcan-child-theme/releases',
+                    'package' => $package
+                    );
+
         }
+
+        /*echo '<pre>';
+        var_dump($transient);
+        echo '</pre>';*/
 
         return $transient;
     }
@@ -97,15 +122,15 @@ class endifMediaGitHubPluginUpdater {
         }
 
         // Add our plugin information
-        $response->last_updated = $this->githubAPIResult->published_at;
+        $response->last_updated = $this->githubAPIResult[0]['published_at'];
         $response->slug = $this->slug;
         $response->plugin_name  = $this->pluginData["Name"];
-        $response->version = $this->githubAPIResult->tag_name;
-        $response->author = $this->pluginData["AuthorName"];
-        $response->homepage = $this->pluginData["PluginURI"];
+        $response->version = $this->githubAPIResult[0]['tag_name'];
+        $response->author = 'Ethan Allen';
+        $response->homepage = $this->pluginData["ThemeURI"];
          
         // This is our release download zip file
-        $downloadLink = $this->githubAPIResult->zipball_url;
+        $downloadLink = $this->githubAPIResult[0]['zipball_url'];
          
         // Include the access token for private GitHub repos
         if ( !empty( $this->accessToken ) ) {
@@ -117,19 +142,19 @@ class endifMediaGitHubPluginUpdater {
         $response->download_link = $downloadLink;
 
         // We're going to parse the GitHub markdown release notes, include the parser
-        require_once( plugin_dir_path( __FILE__ ) . "Parsedown.php" );
+        require_once( 'Parsedown.php' );
 
         // Create tabs in the lightbox
         $response->sections = array(
             'description' => $this->pluginData["Description"],
             'changelog' => class_exists( "Parsedown" )
-                ? Parsedown::instance()->parse( $this->githubAPIResult->body )
-                : $this->githubAPIResult->body
+                ? Parsedown::instance()->parse( $this->githubAPIResult[0]['body'] )
+                : $this->githubAPIResult[0]['body']
         );
 
         // Gets the required version of WP if available
         $matches = null;
-        preg_match( "/requires:\s([\d\.]+)/i", $this->githubAPIResult->body, $matches );
+        preg_match( "/requires:\s([\d\.]+)/i", $this->githubAPIResult[0]['body'], $matches );
         if ( ! empty( $matches ) ) {
             if ( is_array( $matches ) ) {
                 if ( count( $matches ) > 1 ) {
@@ -140,7 +165,7 @@ class endifMediaGitHubPluginUpdater {
          
         // Gets the tested version of WP if available
         $matches = null;
-        preg_match( "/tested:\s([\d\.]+)/i", $this->githubAPIResult->body, $matches );
+        preg_match( "/tested:\s([\d\.]+)/i", $this->githubAPIResult[0]['body'], $matches );
         if ( ! empty( $matches ) ) {
             if ( is_array( $matches ) ) {
                 if ( count( $matches ) > 1 ) {
@@ -149,8 +174,8 @@ class endifMediaGitHubPluginUpdater {
             }
         }
          
-        return $response;
-
+        //return $response;
+        //var_dump($response);
     }
  
     // Perform additional actions to successfully install our plugin
