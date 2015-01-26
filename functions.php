@@ -323,7 +323,9 @@ add_action( 'admin_enqueue_scripts', 'stringcan_admin_scripts' );
 /**
  * @since version 1.0
  * 
- * Enqueue front end scripts
+ * Enqueue parent and child styles in THIS order, LAST.
+ * Priority is key, enqueueing should take place later down the line,
+ * in this case 999. <- Keep a log of priority levels.
  */
 function stringcan_add_scripts() {
     //add parent stylesheet
@@ -337,7 +339,7 @@ function stringcan_add_scripts() {
         //add back dequeued scripts here
 
 }
-add_action( 'wp_enqueue_scripts', 'stringcan_add_scripts' );
+add_action( 'wp_enqueue_scripts', 'stringcan_add_scripts', '999' );
 
 /**
  * @since version 1.1 added update_option( 'template', With New Parent Theme' );
@@ -394,7 +396,7 @@ function stringcan_create_stylesheet($css) {
     $styleFile = get_stylesheet_directory() . '/css/stringcan-style.css';
 
     //MINIFY!
-    $css = preg_replace('/\s+/', '', $css);
+    $css = str_replace('; ',';',str_replace(' }','}',str_replace('{ ','{',str_replace(array("\r\n","\r","\n","\t",'  ','    ','    '),"",preg_replace('!/\*[^*]*\*+([^/][^*]*\*+)*/!','',$css)))));
 
     //write the contents to the file
     file_put_contents($styleFile, $css);
