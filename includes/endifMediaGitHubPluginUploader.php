@@ -181,7 +181,7 @@ class endifMediaGitHubPluginUpdater {
     // Perform additional actions to successfully install our plugin
     public function postInstall( $true, $hook_extra, $result ) {
         // Get plugin information
-        $this->initPluginData();
+        $this->initThemeData();
 
         // Remember if our plugin was previously activated
         $wasActivated = is_plugin_active( $this->slug );
@@ -189,14 +189,60 @@ class endifMediaGitHubPluginUpdater {
         // Since we are hosted in GitHub, our plugin folder would have a dirname of
         // reponame-tagname change it to our original one:
         global $wp_filesystem;
+
         $pluginFolder = WP_PLUGIN_DIR . DIRECTORY_SEPARATOR . dirname( $this->slug );
         $wp_filesystem->move( $result['destination'], $pluginFolder );
         $result['destination'] = $pluginFolder;
+
+        echo '<pre class="dollarsign-filesystem">';
+        var_dump($wp_filesystem);
+        echo '</pre>';        
+
+        echo '<pre class="dollarsign-pluginFolder">';
+        var_dump($pluginFolder);
+        echo '</pre>';
+
+
+        echo '<pre class="dollarsign-result">';
+        var_dump($result);
+        echo '</pre>';
 
         // Re-activate plugin if needed
         if ( $wasActivated ) {
             $activate = activate_plugin( $this->slug );
         }
+
+            /**
+             * @since version 1.3
+             *  
+             * Reset the parent theme for the Stringcan Child Theme
+             *  
+             * Repo in GITHUB has template and text domain blank by default.
+             * We need to add the original settings back for the site to work.
+             */
+    
+             //get stylesheet
+             $stylesheet = get_stylesheet_directory() . '/style.css';
+
+             //create an array from lines
+             $lines = file($stylesheet);
+
+             //put together a few key varables
+             $parentTheme = get_option( 'template');
+             $template = 'Template: ' . $parentTheme . "\n";
+             $textDomain = 'Text Domain: ' . $parentTheme . "\n";        
+           
+             //build array of keys and NEW values
+             $stylesheet_output_params = array(
+                $lines[9] => $template,
+                $lines[10] => $textDomain
+             );
+
+             $writeOutput = str_replace(array_keys($stylesheet_output_params), array_values($stylesheet_output_params), $lines);
+
+             //write the contents back to the file
+             file_put_contents($stylesheet, $writeOutput);
+
          
         return $result;
     }
