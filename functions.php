@@ -92,6 +92,7 @@ function stringcan_initialize_parent() {
              update_option('comment_registration', '1'); //Users must be registered and logged in to comment
              update_option('comment_moderation', '1'); //Comment must be manually approved
 
+             update_option('image_default_link_type', 'none');//Turn off automatic image linking
 
         //do action to update parent theme
         do_action('stringcan_parent_init', $parentThemeInit);
