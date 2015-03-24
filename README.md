@@ -1,1 +1,1 @@
-# stringcan-child-theme
+# Stringcan Theme
