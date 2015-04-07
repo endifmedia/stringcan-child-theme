@@ -452,7 +452,15 @@ function stringcan_options_page(){
                 break;
                 case 'styles' :
 
-                    $stringcanSettings['stringcan_css_box'] = $_POST['stringcan-css-box'];
+                    /**
+                     * @since version 1.2.3 
+                     *  
+                     * Get rid of quotes in ACE editor.
+                     *  
+                     * Added stripslashes() to stringcan-css-box input.Fixes a bug that adds a \ before 
+                     * all quotes in ACE editor.
+                     */
+                    $stringcanSettings['stringcan_css_box'] = stripcslashes($_POST['stringcan-css-box']);                    $stringcanSettings['stringcan_css_box'] = $_POST['stringcan-css-box'];
 
                     //update options
                     update_option( 'stringcan_theme_settings', $stringcanSettings );
