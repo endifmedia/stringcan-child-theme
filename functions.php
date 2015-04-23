@@ -64,11 +64,11 @@ function stringcan_initialize_parent() {
         $themes = wp_get_themes();
 
         //grab the first one in the array
-        $parentThemeInit = array_keys($themes)[0];
+        $parentThemeInit = array_keys($themes);
 
         //setup init variable
         $initStringcanSettings = array(
-            'strincan_parent_theme' => $parentThemeInit,
+            'strincan_parent_theme' => $parentThemeInit[0],
             'stringcan_css_box' => ''
         );
         //update child theme settings
